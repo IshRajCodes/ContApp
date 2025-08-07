@@ -1,0 +1,15 @@
+version: '3'
+services:
+  db:
+    image: postgres
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: pass
+      POSTGRES_DB: appdb
+
+  app:
+    build: .                  # 👈 builds from local Dockerfile
+    ports:
+      - "5000:5000"           # exposes Flask app
+    depends_on:
+      - db
