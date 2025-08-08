@@ -34,4 +34,4 @@ volumes:
   pgdata:
 
 networks:
-  appnet:
+  contappnet:
