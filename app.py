@@ -1,16 +1,17 @@
 from flask import Flask
 from datetime import datetime
 import psycopg2
+import os
 
 app = Flask(__name__)
 
 def check_db():
     try:
         conn = psycopg2.connect(
-            dbname="appdb",
-            user="user",
-            password="pass",
-            host="db",
+            dbname=os.getenv("DB_NAME"),
+            user=os.getenv("DB_USER"),
+            password=os.getenv("DB_PASS"),
+            host=os.getenv("DB_HOST"),
             port="5432"
         )
         conn.close()
@@ -20,12 +21,13 @@ def check_db():
 
 @app.route("/")
 def home():
+    status = check_db()
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     return f"""
     <html>
     <head><meta http-equiv="refresh" content="30"></head>
     <body>
-      <h2>{check_db()}</h2>
+      <h2>{status}</h2>
       <p>Timestamp: {timestamp}</p>
       <p>Auto-refreshing every 30 seconds...</p>
     </body>

@@ -1,18 +1,57 @@
-name: Local Docker Build and Run
+name: Deploy to Host 1 and Host 2
+
 on:
   push:
-    branches: [ master ]  # or your working branch
+    branches: [master] # Change to 'main' if needed
 
 jobs:
-  build-and-run:
-    runs-on: self-hosted
+  deploy-host1:
+    name: Deploy to akmlinux1
+    runs-on: [akmlinux1]
 
     steps:
+      - name: Update /etc/hosts
+        run: |
+          echo "192.168.2.13 akmlinux1" | sudo tee -a /etc/hosts
+          echo "192.168.2.12 akmlinux2" | sudo tee -a /etc/hosts
+
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Build and run with Docker Compose
+      - name: Create .env file from secrets
         run: |
-          docker-compose down --volumes
-          docker-compose build
-          docker-compose up -d
+          echo "POSTGRES_USER=${{ secrets.DB_USER }}" >> .env
+          echo "POSTGRES_PASSWORD=${{ secrets.DB_PASS }}" >> .env
+          echo "POSTGRES_DB=${{ secrets.POSTGRES_DB }}" >> .env
+
+      - name: Stop and clean up old containers
+        run: docker-compose down --volumes --remove-orphans
+
+      - name: Build and start services
+        run: docker-compose up -d --build
+
+  deploy-host2:
+    name: Deploy to akmlinux2
+    runs-on: [akmlinux2]
+    needs: deploy-host1
+
+    steps:
+      - name: Update /etc/hosts
+        run: |
+          echo "192.168.2.13 akmlinux1" | sudo tee -a /etc/hosts
+          echo "192.168.2.12 akmlinux2" | sudo tee -a /etc/hosts
+          
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Create .env file from secrets
+        run: |
+          echo "POSTGRES_USER=${{ secrets.DB_USER }}" >> .env
+          echo "POSTGRES_PASSWORD=${{ secrets.DB_PASS }}" >> .env
+          echo "POSTGRES_DB=${{ secrets.POSTGRES_DB }}" >> .env
+
+      - name: Stop and clean up old container on host2
+        run: docker-compose -f docker-compose.host2.yml down --remove-orphans
+
+      - name: Build and start app container on host2
+        run: docker-compose -f docker-compose.host2.yml up -d --build

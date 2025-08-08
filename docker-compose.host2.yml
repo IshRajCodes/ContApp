@@ -1,0 +1,14 @@
+version: "3.8"
+
+services:
+  app:
+    build: .
+    container_name: contapphost2
+    restart: always
+    ports:
+      - "5000:5000"
+    environment:
+      DB_HOST: akmlinux1
+      DB_NAME: ${POSTGRES_DB}
+      DB_USER: ${POSTGRES_USER}
+      DB_PASS: ${POSTGRES_PASSWORD}
